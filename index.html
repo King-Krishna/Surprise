@@ -105,25 +105,26 @@
         </div>
     </div>
 
-    <script>
+   <script>
         const canvas = document.getElementById('tulipCanvas');
         const ctx = canvas.getContext('2d');
+        const bgMusic = document.getElementById('bgMusic');
         let particles = [];
-        let petalCount = 40;
         let isSuccess = false;
 
-        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        function resize() { 
+            canvas.width = window.innerWidth; 
+            canvas.height = window.innerHeight; 
+        }
         window.addEventListener('resize', resize);
         resize();
 
         class TulipPetal {
-            constructor(isExtra = false) {
-                this.reset(isExtra);
-            }
+            constructor(isExtra = false) { this.reset(isExtra); }
             reset(isExtra = false) {
                 this.x = Math.random() * canvas.width;
                 this.y = isExtra ? (Math.random() * -canvas.height) : (Math.random() * canvas.height - canvas.height);
-                this.size = Math.random() * 10 + 5;
+                this.size = Math.random() * 12 + 8; 
                 this.speed = isSuccess ? (Math.random() * 3 + 2) : (Math.random() * 1 + 0.5);
                 this.color = ['#ff8fa3', '#ff4d6d', '#ffb7c5'][Math.floor(Math.random() * 3)];
                 this.angle = Math.random() * 360;
@@ -134,7 +135,6 @@
                 ctx.translate(this.x, this.y);
                 ctx.rotate(this.angle * Math.PI / 180);
                 ctx.beginPath();
-                // Simple petal shape
                 ctx.moveTo(0, 0);
                 ctx.bezierCurveTo(this.size, -this.size, this.size, this.size, 0, this.size);
                 ctx.bezierCurveTo(-this.size, this.size, -this.size, -this.size, 0, 0);
@@ -149,7 +149,7 @@
             }
         }
 
-        for (let i = 0; i < petalCount; i++) particles.push(new TulipPetal());
+        for (let i = 0; i < 40; i++) particles.push(new TulipPetal());
 
         function animate() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -159,7 +159,15 @@
         animate();
 
         function nextPage(currentPage) {
-            if(currentPage === 1) document.getElementById('bgMusic').play().catch(() => {});
+            // MUSIC TRIGGER: This is the most important part for Vercel/Mobile
+            if (currentPage === 1) {
+                bgMusic.play().then(() => {
+                    console.log("Music playing");
+                }).catch(err => {
+                    console.log("Music blocked: ", err);
+                });
+            }
+            
             document.getElementById('page' + currentPage).classList.add('hidden');
             document.getElementById('page' + (currentPage + 1)).classList.remove('hidden');
         }
@@ -167,10 +175,8 @@
         function moveNoButton() {
             const btn = document.getElementById('noBtn');
             if (btn.style.position !== 'absolute') btn.style.position = 'absolute';
-
             const rect = btn.getBoundingClientRect();
             
-            // Create static tulip at current spot
             const t = document.createElement('div');
             t.className = 'static-tulip';
             t.innerHTML = '🌷';
@@ -178,13 +184,9 @@
             t.style.top = rect.top + 'px';
             document.getElementById('tulipGarden').appendChild(t);
 
-            // Movement logic: jump to a nearby but random location
-            // Limit jump to 200px max so it's not a crazy leap
-            const jumpDist = 50;
+            const jumpDist = 150; // Reduced movement as requested
             let newX = rect.left + (Math.random() * (jumpDist * 2) - jumpDist);
             let newY = rect.top + (Math.random() * (jumpDist * 2) - jumpDist);
-
-            // Keep it within screen bounds
             newX = Math.max(50, Math.min(newX, window.innerWidth - 150));
             newY = Math.max(50, Math.min(newY, window.innerHeight - 100));
 
@@ -196,9 +198,8 @@
             isSuccess = true;
             document.getElementById('page4').classList.add('hidden');
             document.getElementById('successPage').classList.remove('hidden');
-            
-            // Spawn 100 extra tulips for the "Tons of tulips" effect
-            for (let i = 0; i < 100; i++) {
+            // EXPLOSION of tulips
+            for (let i = 0; i < 150; i++) {
                 particles.push(new TulipPetal(true));
             }
         }
