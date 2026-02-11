@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>A Special Surprise</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Poppins:wght@300;600&display=swap" rel="stylesheet">
+    <style>
+        body { 
+            margin: 0; 
+            overflow: hidden; 
+            background: #fff5f7; 
+            font-family: 'Poppins', sans-serif;
+            cursor: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='40' height='40' style='font-size:30px'><text y='30'>🌷</text></svg>"), auto;
+        }
+        canvas { position: fixed; top: 0; left: 0; z-index: 1; pointer-events: none; }
+        .content-layer { position: relative; z-index: 10; height: 100vh; display: flex; flex-direction: column; justify-content: center; align-items: center; text-align: center; }
+        .hidden { display: none; }
+        h1 { font-family: 'Dancing Script', cursive; }
+        
+        .glass-card { 
+            background: rgba(255, 255, 255, 0.5); 
+            backdrop-filter: blur(10px); 
+            border: 1px solid rgba(255, 255, 255, 0.6); 
+            padding: 3rem; 
+            border-radius: 2.5rem; 
+            box-shadow: 0 15px 35px rgba(225, 29, 72, 0.1); 
+            animation: fadeIn 0.8s ease-out;
+        }
+
+        #noBtn { transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275); z-index: 30; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: scale(0.9); } to { opacity: 1; transform: scale(1); } }
+
+        .static-tulip {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+            z-index: 5;
+            animation: grow 0.5s ease-out;
+        }
+        @keyframes grow { from { transform: scale(0); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <audio id="bgMusic" loop>
+        <source src="something_about_you.mp3" type="audio/mpeg">
+    </audio>
+
+    <canvas id="tulipCanvas"></canvas>
+    <div id="tulipGarden"></div>
+
+    <div id="page1" class="content-layer">
+        <div class="glass-card mx-4">
+            <h1 class="text-5xl text-rose-600 mb-6">Hey Beautiful...</h1>
+            <p class="text-gray-600 mb-8 italic">I was just thinking about how awesome you are...</p>
+            <button onclick="nextPage(1)" class="px-12 py-4 bg-rose-500 text-white rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
+                Click Me
+            </button>
+        </div>
+    </div>
+
+    <div id="page2" class="content-layer hidden">
+        <div class="glass-card mx-4">
+            <h1 class="text-5xl text-rose-600 mb-6">You know...</h1>
+            <p class="text-gray-600 mb-8 italic text-lg">...and how lucky I am to have you</p>
+            <button onclick="nextPage(2)" class="px-12 py-4 bg-rose-400 text-white rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
+                Click Me
+            </button>
+        </div>
+    </div>
+
+    <div id="page3" class="content-layer hidden">
+        <div class="glass-card mx-4">
+            <h1 class="text-5xl text-rose-600 mb-6">You make me smile every single day...</h1>
+            <p class="text-gray-600 mb-8 italic">Soo... I was wondering 👉🏻👈🏻</p>
+            <button onclick="nextPage(3)" class="px-12 py-4 bg-rose-600 text-white rounded-full font-bold shadow-lg hover:scale-105 transition-transform">
+                Click Me
+            </button>
+        </div>
+    </div>
+
+    <div id="page4" class="content-layer hidden">
+        <h1 class="text-5xl md:text-7xl text-rose-600 mb-16 px-4">Will you be my Valentine? 😍 </h1>
+        
+        <div class="flex gap-8 items-center justify-center w-full relative h-48" id="btnWrapper">
+            <button onclick="sayYes()" class="px-16 py-5 bg-green-500 text-white text-3xl rounded-full font-bold hover:bg-green-600 shadow-xl z-20 transition-transform hover:scale-110">
+                YES!
+            </button>
+            <button id="noBtn" 
+                onmouseover="moveNoButton()" 
+                onclick="moveNoButton()" 
+                class="px-10 py-4 bg-rose-400 text-white text-xl rounded-full font-bold shadow-lg">
+                No
+            </button>
+        </div>
+    </div>
+
+    <div id="successPage" class="content-layer hidden">
+        <div class="glass-card">
+            <h1 class="text-7xl text-rose-600 mb-4">She Said YESS!❤️💗</h1>
+            <p class="text-2xl text-rose-400 font-semibold">You just melt my heart 💖🫠😭...</p>
+        </div>
+    </div>
+
+    <script>
+        const canvas = document.getElementById('tulipCanvas');
+        const ctx = canvas.getContext('2d');
+        let particles = [];
+        let petalCount = 40;
+        let isSuccess = false;
+
+        function resize() { canvas.width = window.innerWidth; canvas.height = window.innerHeight; }
+        window.addEventListener('resize', resize);
+        resize();
+
+        class TulipPetal {
+            constructor(isExtra = false) {
+                this.reset(isExtra);
+            }
+            reset(isExtra = false) {
+                this.x = Math.random() * canvas.width;
+                this.y = isExtra ? (Math.random() * -canvas.height) : (Math.random() * canvas.height - canvas.height);
+                this.size = Math.random() * 10 + 5;
+                this.speed = isSuccess ? (Math.random() * 3 + 2) : (Math.random() * 1 + 0.5);
+                this.color = ['#ff8fa3', '#ff4d6d', '#ffb7c5'][Math.floor(Math.random() * 3)];
+                this.angle = Math.random() * 360;
+                this.spin = Math.random() * 2 - 1;
+            }
+            draw() {
+                ctx.save();
+                ctx.translate(this.x, this.y);
+                ctx.rotate(this.angle * Math.PI / 180);
+                ctx.beginPath();
+                // Simple petal shape
+                ctx.moveTo(0, 0);
+                ctx.bezierCurveTo(this.size, -this.size, this.size, this.size, 0, this.size);
+                ctx.bezierCurveTo(-this.size, this.size, -this.size, -this.size, 0, 0);
+                ctx.fillStyle = this.color;
+                ctx.fill();
+                ctx.restore();
+            }
+            update() {
+                this.y += this.speed;
+                this.angle += this.spin;
+                if (this.y > canvas.height + 20) this.reset();
+            }
+        }
+
+        for (let i = 0; i < petalCount; i++) particles.push(new TulipPetal());
+
+        function animate() {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => { p.update(); p.draw(); });
+            requestAnimationFrame(animate);
+        }
+        animate();
+
+        function nextPage(currentPage) {
+            if(currentPage === 1) document.getElementById('bgMusic').play().catch(() => {});
+            document.getElementById('page' + currentPage).classList.add('hidden');
+            document.getElementById('page' + (currentPage + 1)).classList.remove('hidden');
+        }
+
+        function moveNoButton() {
+            const btn = document.getElementById('noBtn');
+            if (btn.style.position !== 'absolute') btn.style.position = 'absolute';
+
+            const rect = btn.getBoundingClientRect();
+            
+            // Create static tulip at current spot
+            const t = document.createElement('div');
+            t.className = 'static-tulip';
+            t.innerHTML = '🌷';
+            t.style.left = rect.left + 'px';
+            t.style.top = rect.top + 'px';
+            document.getElementById('tulipGarden').appendChild(t);
+
+            // Movement logic: jump to a nearby but random location
+            // Limit jump to 200px max so it's not a crazy leap
+            const jumpDist = 50;
+            let newX = rect.left + (Math.random() * (jumpDist * 2) - jumpDist);
+            let newY = rect.top + (Math.random() * (jumpDist * 2) - jumpDist);
+
+            // Keep it within screen bounds
+            newX = Math.max(50, Math.min(newX, window.innerWidth - 150));
+            newY = Math.max(50, Math.min(newY, window.innerHeight - 100));
+
+            btn.style.left = newX + 'px';
+            btn.style.top = newY + 'px';
+        }
+
+        function sayYes() {
+            isSuccess = true;
+            document.getElementById('page4').classList.add('hidden');
+            document.getElementById('successPage').classList.remove('hidden');
+            
+            // Spawn 100 extra tulips for the "Tons of tulips" effect
+            for (let i = 0; i < 100; i++) {
+                particles.push(new TulipPetal(true));
+            }
+        }
+    </script>
+</body>
+</html>
